@@ -5,6 +5,7 @@ This repo includes a Render Blueprint at `render.yaml`.
 ## Stack
 
 - `brailleai-ui` (Caddy + static frontend, free plan)
+- `brailleai-ui` (Nginx + static frontend, free plan)
 - `brailleai-backend` (Spring Boot + Liblouis, starter plan)
 - `brailleai-vision` (Python vision service, free plan)
 

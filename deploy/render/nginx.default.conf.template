@@ -1,0 +1,17 @@
+server {
+    listen __PORT__;
+    listen [::]:__PORT__;
+    server_name _;
+
+    root /srv;
+    index index.html;
+
+    location /api/ {
+        proxy_pass http://__BACKEND_HOSTPORT__;
+        proxy_http_version 1.1;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
