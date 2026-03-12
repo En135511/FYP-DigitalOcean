@@ -13,7 +13,7 @@ services:
     plan: starter
     dockerfilePath: ./deploy/render/backend.Dockerfile
     dockerContext: .
-    healthCheckPath: /api/braille/health
+    healthCheckPath: /healthz
     envVars:
       - key: VISION_SERVICE_HOSTPORT
         fromService:

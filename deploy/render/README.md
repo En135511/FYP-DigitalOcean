@@ -29,6 +29,10 @@ This repo includes a Render Blueprint at `render.yaml`.
 7. Wait for all 3 services to reach `Live`.
 8. Open the `brailleai-ui` URL.
 
+Notes:
+- Render backend health probe uses `/healthz` (lightweight startup probe).
+- Functional API check remains available at `/api/braille/health`.
+
 ## Optional Next Step
 
 - Upgrade `brailleai-vision` from free to starter if image translation cold starts are too slow.
