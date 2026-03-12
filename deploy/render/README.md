@@ -32,6 +32,8 @@ This repo includes a Render Blueprint at `render.yaml`.
 Notes:
 - Render backend health probe uses `/healthz` (lightweight startup probe).
 - Functional API check remains available at `/api/braille/health`.
+- On free vision instances, first image request can cold-start and take longer.
+- UI proxy timeouts are extended for `/api/vision/*` to avoid false 504s.
 
 ## Optional Next Step
 
