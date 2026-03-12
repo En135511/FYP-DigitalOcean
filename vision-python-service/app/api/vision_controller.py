@@ -25,6 +25,24 @@ def _read_float_env(name: str, default: float) -> float:
         return default
 
 
+@router.get("/debug/model-info")
+def model_info() -> dict:
+    names = getattr(_model, "names", {}) or {}
+    sample = []
+    for key in sorted(names.keys())[:8]:
+        sample.append(str(names[key]))
+
+    return {
+        "status": "ok",
+        "model_path_env": os.getenv("YOLO_MODEL_PATH", ""),
+        "class_count": len(names),
+        "dotneuralnet_model": bool(_engine._is_dotneuralnet_model()),
+        "sample_class_names": sample,
+        "conf_threshold": _read_float_env("YOLO_CONF_THRESHOLD", 0.18),
+        "iou_threshold": _read_float_env("YOLO_IOU_THRESHOLD", 0.30),
+    }
+
+
 @router.post("/detect-dots", response_model=DotDetectionResponse)
 async def detect_dots(image: UploadFile = File(...)) -> DotDetectionResponse:
     start = time.perf_counter()
