@@ -98,42 +98,23 @@ class YoloInferenceEngine:
     ) -> Tuple[List[Dict[str, Any]], int, int, Optional[str], str, int, bool, Optional[str]]:
         variants = build_detection_variants(arr)
 
-        all_cells: List[Dict[str, Any]] = []
-        for variant_meta in variants:
-            # Backward-compatible with both:
-            # - new dict metadata variants
-            # - legacy tuple variants: (name, image)
-            if isinstance(variant_meta, dict):
-                source = str(variant_meta.get("name", "original"))
-                variant = variant_meta.get("image")
-                variant_to_original = variant_meta.get("variant_to_original")
-            elif isinstance(variant_meta, tuple) and len(variant_meta) >= 2:
-                source = str(variant_meta[0])
-                variant = variant_meta[1]
-                variant_to_original = None
-            else:
-                continue
-            if variant is None:
-                continue
+        all_cells = self._collect_cells_from_variants(variants, width, height, conf, iou)
 
-            results = self.model.predict(source=variant, conf=conf, iou=iou, verbose=False)
-            if not results:
-                continue
-            first = results[0]
-            if first.boxes is None or len(first.boxes) == 0:
-                continue
-            cells = self._extract_cells(
-                first.boxes,
-                variant_to_original=variant_to_original,
-                image_width=width,
-                image_height=height,
-            )
-            for cell in cells:
-                cell["source"] = source
-            all_cells.extend(cells)
+        retry_conf = self._read_float_env("YOLO_CONF_RETRY_THRESHOLD", 0.08)
+        if not all_cells and 0.0 < retry_conf < conf:
+            all_cells = self._collect_cells_from_variants(variants, width, height, retry_conf, iou)
 
         if not all_cells:
-            return [], width, height, "", "dotneuralnet-cell-64-consensus", 0, False, "No Braille cells detected."
+            return (
+                [],
+                width,
+                height,
+                "",
+                "dotneuralnet-cell-64-consensus",
+                0,
+                False,
+                f"No Braille cells detected (conf={conf:.2f}, retry={retry_conf:.2f})."
+            )
 
         fused_cells, uncertain_cells_count = self._fuse_cells(all_cells)
         braille_unicode = self._cells_to_braille_unicode(fused_cells)
@@ -164,6 +145,53 @@ class YoloInferenceEngine:
             review_recommended,
             quality_warning,
         )
+
+    def _collect_cells_from_variants(
+        self,
+        variants: List[Any],
+        width: int,
+        height: int,
+        conf: float,
+        iou: float
+    ) -> List[Dict[str, Any]]:
+        all_cells: List[Dict[str, Any]] = []
+
+        for variant_meta in variants:
+            # Backward-compatible with both:
+            # - new dict metadata variants
+            # - legacy tuple variants: (name, image)
+            if isinstance(variant_meta, dict):
+                source = str(variant_meta.get("name", "original"))
+                variant = variant_meta.get("image")
+                variant_to_original = variant_meta.get("variant_to_original")
+            elif isinstance(variant_meta, tuple) and len(variant_meta) >= 2:
+                source = str(variant_meta[0])
+                variant = variant_meta[1]
+                variant_to_original = None
+            else:
+                continue
+            if variant is None:
+                continue
+
+            results = self.model.predict(source=variant, conf=conf, iou=iou, verbose=False)
+            if not results:
+                continue
+
+            first = results[0]
+            if first.boxes is None or len(first.boxes) == 0:
+                continue
+
+            cells = self._extract_cells(
+                first.boxes,
+                variant_to_original=variant_to_original,
+                image_width=width,
+                image_height=height,
+            )
+            for cell in cells:
+                cell["source"] = source
+            all_cells.extend(cells)
+
+        return all_cells
 
     def _is_dotneuralnet_model(self) -> bool:
         names = getattr(self.model, "names", {}) or {}

@@ -10,7 +10,9 @@ services:
       - key: YOLO_MODEL_PATH
         value: /app/model/yolov8_braille.pt
       - key: YOLO_CONF_THRESHOLD
-        value: "0.18"
+        value: "0.12"
+      - key: YOLO_CONF_RETRY_THRESHOLD
+        value: "0.08"
       - key: YOLO_IOU_THRESHOLD
         value: "0.30"
       - key: YOLO_BEAM_WIDTH

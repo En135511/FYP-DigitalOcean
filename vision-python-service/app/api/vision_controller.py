@@ -39,6 +39,7 @@ def model_info() -> dict:
         "dotneuralnet_model": bool(_engine._is_dotneuralnet_model()),
         "sample_class_names": sample,
         "conf_threshold": _read_float_env("YOLO_CONF_THRESHOLD", 0.18),
+        "conf_retry_threshold": _read_float_env("YOLO_CONF_RETRY_THRESHOLD", 0.08),
         "iou_threshold": _read_float_env("YOLO_IOU_THRESHOLD", 0.30),
     }
 
