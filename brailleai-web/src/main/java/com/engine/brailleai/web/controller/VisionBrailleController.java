@@ -296,11 +296,14 @@ public class VisionBrailleController {
                 translatedText,
                 qualityWarning
         );
-        List<VisionDetectedDot> originalDots = toApiDots(
-                originalAttempt == null ? null : originalAttempt.getDetectionResponse()
-        );
-        response.setDetectedDots(originalDots);
-        response.setDetectedDotsCount(originalDots.size());
+        DotDetectionResponseDto dotSource = responseAttempt == null ? null : responseAttempt.getDetectionResponse();
+        if ((dotSource == null || dotSource.getDots() == null || dotSource.getDots().isEmpty())
+                && originalAttempt != null) {
+            dotSource = originalAttempt.getDetectionResponse();
+        }
+        List<VisionDetectedDot> detectedDots = toApiDots(dotSource);
+        response.setDetectedDots(detectedDots);
+        response.setDetectedDotsCount(detectedDots.size());
         List<VisionLowConfidenceCell> lowConfidenceCells = toApiLowConfidenceCells(reviewAssessment);
         response.setLowConfidenceCells(lowConfidenceCells);
         response.setLowConfidenceCellsCount(reviewAssessment.getLowConfidenceCellsCount());
