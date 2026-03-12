@@ -949,6 +949,9 @@ const translateImage = async (baseUrl, imageBlob) => {
     const brailleUnicode = data.brailleUnicode || null;
     const translatedText = data.translatedText || "";
     const warnings = [];
+    const detectedDotsCount = Number.isFinite(data.detectedDotsCount)
+      ? Number(data.detectedDotsCount)
+      : 0;
     const lowConfidenceCellsCount = Number.isFinite(data.lowConfidenceCellsCount)
       ? Number(data.lowConfidenceCellsCount)
       : 0;
@@ -960,6 +963,9 @@ const translateImage = async (baseUrl, imageBlob) => {
       warnings.push(
         `Manual review recommended before final export (${lowConfidenceCellsCount} uncertain cells).`
       );
+    }
+    if (detectedDotsCount === 0) {
+      warnings.push("No Braille dots were detected. Try a closer, sharper, higher-contrast image.");
     }
     if (!translatedText.trim()) {
       warnings.push("No text was produced from this image.");
@@ -981,7 +987,8 @@ const translateImage = async (baseUrl, imageBlob) => {
       warnings,
       [
         table ? `table: ${table}` : "table: default",
-        `input: ${inputType}`
+        `input: ${inputType}`,
+        `dots: ${detectedDotsCount}`
       ]
     );
     setStatus("Done.");
