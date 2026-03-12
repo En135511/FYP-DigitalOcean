@@ -28,7 +28,7 @@ COPY liblouis/tables /app/liblouis/tables
 COPY deploy/render/start-backend.sh /app/start-backend.sh
 RUN chmod +x /app/start-backend.sh
 
-ENV JAVA_TOOL_OPTIONS="-DLOUIS_CLI_PATH=/usr/bin/lou_translate -DLOUIS_TABLE=/app/liblouis/tables/en-us-g2.ctb"
+ENV JAVA_TOOL_OPTIONS="-DLOUIS_CLI_PATH=/usr/bin/lou_translate -DLOUIS_TABLE=/usr/share/liblouis/tables/en-us-g2.ctb"
 
 EXPOSE 10000
 

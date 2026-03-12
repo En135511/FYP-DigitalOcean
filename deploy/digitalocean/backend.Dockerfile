@@ -27,7 +27,7 @@ COPY liblouis/tables /app/liblouis/tables
 
 ENV SERVER_PORT=8080
 ENV VISION_SERVICE_BASE_URL=http://vision:8000
-ENV JAVA_TOOL_OPTIONS="-DLOUIS_CLI_PATH=/usr/bin/lou_translate -DLOUIS_TABLE=/app/liblouis/tables/en-us-g2.ctb"
+ENV JAVA_TOOL_OPTIONS="-DLOUIS_CLI_PATH=/usr/bin/lou_translate -DLOUIS_TABLE=/usr/share/liblouis/tables/en-us-g2.ctb"
 
 EXPOSE 8080
 
