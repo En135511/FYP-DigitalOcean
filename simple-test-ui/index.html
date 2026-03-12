@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BrailleAI</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./settings.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo" aria-label="Braille icon">
+          <span class="dot on"></span>
+          <span class="dot on"></span>
+          <span class="dot on"></span>
+          <span class="dot on"></span>
+          <span class="dot on"></span>
+          <span class="dot on"></span>
+        </div>
+        <div class="title">
+          <h1>BrailleAI</h1>
+          <p>Professional Translation Workspace</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <nav class="top-nav" aria-label="Primary">
+          <a class="nav-link active" href="./index.html">Workspace</a>
+          <a class="nav-link" href="./perkins.html">Perkins Input</a>
+        </nav>
+        <div class="controls controls-inline">
+          <label class="field topbar-field">
+            <span>Braille Table</span>
+            <select id="tableSelect" aria-label="Braille Table"></select>
+          </label>
+          <div class="action-pair">
+            <button id="healthCheck" class="btn secondary">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+              Service Status
+            </button>
+            <button
+              id="helpToggle"
+              class="btn secondary help-trigger"
+              aria-haspopup="dialog"
+              aria-controls="helpModal"
+              aria-expanded="false"
+              aria-label="Help"
+              title="Help"
+            >
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M9.25 9a2.75 2.75 0 0 1 5.4.75c0 1.55-1.4 2.27-2.18 2.84-.66.48-.97.88-.97 1.66"></path>
+                <circle cx="12" cy="17.25" r="1"></circle>
+              </svg>
+              Guide
+            </button>
+            <button id="settingsOpen" class="btn secondary" type="button" aria-haspopup="dialog" aria-expanded="false">
+              Settings
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <input id="baseUrl" type="hidden" value="same-origin" />
+
+    <main class="app">
+      <section class="chat">
+        <div id="messages" class="messages"></div>
+      </section>
+
+      <section class="composer">
+        <div class="mode-tabs">
+          <button class="tab active" data-mode="text">Text</button>
+          <button class="tab" data-mode="image">Image</button>
+          <button class="tab" data-mode="camera">Camera</button>
+        </div>
+
+        <div class="mode-panel" data-panel="text">
+          <label class="field">
+            <span>Message</span>
+            <textarea id="textInput" rows="3" placeholder="Type text or paste Braille Unicode..."></textarea>
+          </label>
+          <p class="hint">Auto-detects plain text vs Braille Unicode and translates in the right direction.</p>
+        </div>
+
+        <div class="mode-panel hidden" data-panel="image">
+          <label class="field">
+            <span>Upload image</span>
+            <input id="imageInput" type="file" accept="image/*" />
+          </label>
+          <div id="imagePreview" class="preview hidden"></div>
+          <p class="hint">Upload a photo of embossed Braille.</p>
+        </div>
+
+        <div class="mode-panel hidden" data-panel="camera">
+          <div class="camera-controls">
+            <button id="startCamera" class="btn">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 7h4l2-2h6l2 2h4v12H3z"></path>
+                <circle cx="12" cy="13" r="3"></circle>
+              </svg>
+              Start Camera
+            </button>
+            <button id="capturePhoto" class="btn secondary" disabled>
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="7"></circle>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              Capture
+            </button>
+            <button id="stopCamera" class="btn secondary" disabled>
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="7" y="7" width="10" height="10" rx="1"></rect>
+              </svg>
+              Stop
+            </button>
+          </div>
+          <video id="cameraVideo" autoplay playsinline></video>
+          <canvas id="cameraCanvas" class="hidden"></canvas>
+          <div id="cameraPreview" class="preview hidden"></div>
+          <p class="hint">Camera requires HTTPS or localhost.</p>
+        </div>
+
+        <div class="send-row">
+          <div class="send-actions">
+            <button id="sendBtn" class="btn primary">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M22 2L11 13"></path>
+                <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
+              </svg>
+              Send
+            </button>
+            <button id="skipTyping" class="btn secondary" disabled>
+              <svg class="icon fill" viewBox="0 0 24 24" aria-hidden="true">
+                <polygon points="3 5 11 12 3 19 3 5"></polygon>
+                <polygon points="13 5 21 12 13 19 13 5"></polygon>
+              </svg>
+              Skip Typing
+            </button>
+          </div>
+          <span id="status" class="status"></span>
+        </div>
+        <div id="errorPanel" class="error-panel hidden">
+          <div class="error-header">
+            <strong>Last Error</strong>
+            <button id="clearError" class="btn ghost">Clear</button>
+          </div>
+          <pre id="errorContent"></pre>
+        </div>
+        <details class="log-drawer">
+          <summary>Raw Response Log</summary>
+          <pre id="logOutput"></pre>
+        </details>
+      </section>
+    </main>
+
+    <div id="helpOverlay" class="help-overlay hidden" aria-hidden="true"></div>
+    <aside
+      id="helpModal"
+      class="help-modal hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+      aria-labelledby="helpTitle"
+    >
+      <div class="help-shell">
+        <div class="help-hero">
+          <div class="help-hero-copy">
+            <p class="help-eyebrow">Guided Support</p>
+            <h2 id="helpTitle">How to use BrailleAI Test Lab</h2>
+            <p class="help-intro">
+              Use this panel whenever you need a fast walkthrough of the main features, expected inputs, and basic troubleshooting.
+            </p>
+          </div>
+          <button id="helpClose" class="btn ghost help-close" aria-label="Close help">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 6l12 12"></path>
+              <path d="M18 6L6 18"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="help-grid">
+          <article class="help-card help-card-wide">
+            <span class="help-chip">Quick Start</span>
+            <h3>Get a result in four steps</h3>
+            <ol class="help-steps">
+              <li>Open Settings, choose <strong>Student</strong> or <strong>Admin</strong> mode, then confirm startup and accessibility options.</li>
+              <li>Choose the Braille table that matches the language or grading you want to test.</li>
+              <li>Pick a mode: Text for direct text, Image for uploaded Braille photos, or Camera for live capture.</li>
+              <li>Press Send to translate, then use response actions to copy output instantly or download the available format (for example BRF in Text to Braille mode).</li>
+            </ol>
+          </article>
+
+          <article class="help-card">
+            <span class="help-chip">Modes</span>
+            <h3>What each feature does</h3>
+            <ul class="help-list">
+              <li><strong>Text:</strong> best for typing Braille text or testing translation output quickly.</li>
+              <li><strong>Image:</strong> upload a saved photo of embossed Braille for detection and translation.</li>
+              <li><strong>Camera:</strong> capture a fresh image directly from your device when supported.</li>
+            </ul>
+          </article>
+
+          <article class="help-card">
+            <span class="help-chip">Useful Controls</span>
+            <h3>Tools around the workspace</h3>
+            <ul class="help-list">
+              <li><strong>Service Status:</strong> confirms whether the Braille API is reachable.</li>
+              <li><strong>Settings:</strong> manages theme, font size, TTS, startup and accessibility.</li>
+              <li><strong>Application Mode:</strong> Student mode keeps settings simple, while Admin mode unlocks advanced controls.</li>
+              <li><strong>Advanced Controls (Admin):</strong> table overrides, key remapping, repeat hotkey, and tone/extra speech options.</li>
+              <li><strong>Response Actions:</strong> use Copy for quick reuse, then click the download icon to choose a file format.</li>
+              <li><strong>Translation Warnings:</strong> the assistant warns when input is mixed, ambiguous, or may not translate reliably.</li>
+              <li><strong>Quality Review Flags:</strong> image responses now include uncertain-cell counts so you can manually review risky transcriptions.</li>
+              <li><strong>Adaptive Page Pass:</strong> full-page uploads are re-checked with segmented processing to recover missed Braille dots.</li>
+              <li><strong>Raw Response Log:</strong> shows the latest endpoint activity for debugging.</li>
+            </ul>
+          </article>
+
+          <article class="help-card">
+            <span class="help-chip">Troubleshooting</span>
+            <h3>If something is not working</h3>
+            <ul class="help-list">
+              <li>Use Service Status first when translations fail or tables do not load.</li>
+              <li>For camera access, run the app on localhost or over HTTPS and allow browser permissions.</li>
+              <li>If Copy Output fails, allow clipboard permissions in the browser and try again.</li>
+              <li>If uploads fail, capture a flat page with even light, no shadows, minimal tilt, and no pen marks over Braille dots.</li>
+              <li>If review is recommended, verify uncertain cells before generating final exam or embosser files.</li>
+            </ul>
+          </article>
+
+          <article class="help-card help-support">
+            <span class="help-chip">Administrator</span>
+            <h3>Need direct support?</h3>
+            <p class="help-support-copy">Contact the administrator helpline for setup issues, service downtime, or access problems.</p>
+            <a class="help-phone" href="tel:+256707255268">+256 707 255268</a>
+            <p class="help-support-note">Include your settings profile and latest error message to get faster help.</p>
+          </article>
+        </div>
+      </div>
+    </aside>
+
+    <footer class="footer">
+      <span>© Enock, Suzan, Dalia, Fareek and Godwill</span>
+    </footer>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

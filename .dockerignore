@@ -1,0 +1,17 @@
+.git
+.github
+.idea
+Brailleai_best
+reports
+**/.idea
+**/.vscode
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/node_modules
+**/target
+**/*.log
+**/*.pyc
+vision-python-service/debug
+liblouis/bin

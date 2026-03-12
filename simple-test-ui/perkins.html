@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BrailleAI Perkins Lab</title>
+    <link rel="stylesheet" href="./perkins.css" />
+    <link rel="stylesheet" href="./settings.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <span class="dot on"></span>
+          <span class="dot on"></span>
+          <span class="dot on"></span>
+          <span class="dot on"></span>
+          <span class="dot on"></span>
+          <span class="dot on"></span>
+        </div>
+        <div class="title">
+          <h1>BrailleAI</h1>
+          <p>Accessible Perkins Input Workspace</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <nav class="top-nav" aria-label="Primary">
+          <a class="nav-link" href="./index.html">Workspace</a>
+          <a class="nav-link active" href="./perkins.html">Perkins Input</a>
+        </nav>
+        <div class="header-controls">
+          <button id="settingsOpen" class="btn secondary" type="button" aria-haspopup="dialog" aria-expanded="false">
+            Settings
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="app-shell">
+      <section class="workspace">
+        <div class="workspace-controls">
+          <label class="field">
+            <span>Active Code</span>
+            <select id="codeSelect">
+              <option value="UEB">UEB</option>
+              <option value="SEB">SEB (Uganda)</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>UEB Table</span>
+            <select id="uebTableSelect"></select>
+          </label>
+
+          <label class="field">
+            <span>SEB (Uganda) Table</span>
+            <select id="sebTableSelect"></select>
+          </label>
+        </div>
+
+        <p class="meta" id="activeTableLabel">Active table: -</p>
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+
+        <section id="perkinsPanel" class="panel">
+          <div class="panel-row">
+            <div>
+              <h2>Perkins Braille to Text</h2>
+              <p class="hint">
+                Hold <code>f d s</code> and <code>j k l</code> as a chord, then release to enter one Braille cell.
+                Use <code>a</code> for backspace, <code>;</code> for enter, <code>a</code> + <code>;</code> together for deleted-text recovery (Ctrl+Y style), and <code>space</code> for spacing.
+              </p>
+            </div>
+            <button id="focusCapture" class="btn primary" type="button">Focus Perkins Input</button>
+          </div>
+
+          <div id="captureZone" class="capture-zone" tabindex="0" role="button" aria-label="Perkins keyboard input zone">
+            Click here, then type with Perkins keys
+          </div>
+
+          <div class="dot-grid-wrap">
+            <p class="dot-grid-label">Current chord</p>
+            <div id="dotGrid" class="dot-grid" aria-live="polite">
+              <span class="dot-cell" data-dot="1"></span>
+              <span class="dot-cell" data-dot="4"></span>
+              <span class="dot-cell" data-dot="2"></span>
+              <span class="dot-cell" data-dot="5"></span>
+              <span class="dot-cell" data-dot="3"></span>
+              <span class="dot-cell" data-dot="6"></span>
+            </div>
+            <p id="chordPreview" class="hint">No keys pressed</p>
+          </div>
+
+          <label class="field">
+            <span>Braille Cells (Input)</span>
+            <textarea id="brailleBuffer" rows="4" readonly></textarea>
+          </label>
+
+          <div class="action-row">
+            <button id="spaceBtn" class="btn" type="button">Space</button>
+            <button id="backspaceBtn" class="btn secondary" type="button">Backspace (A)</button>
+            <button id="enterBtn" class="btn secondary" type="button">Enter (;)</button>
+            <button id="clearBrailleBtn" class="btn ghost" type="button">Clear</button>
+          </div>
+
+          <label class="field">
+            <span>Translated Text (Output)</span>
+            <textarea id="translatedTextOutput" rows="4" readonly></textarea>
+          </label>
+
+          <div class="export-row">
+            <p class="hint">Export from current Perkins session</p>
+            <div class="action-row export-actions">
+              <button id="downloadBrfBtn" class="btn secondary" type="button">Download BRF</button>
+              <button id="downloadDocxBtn" class="btn secondary" type="button">Download DOCX</button>
+              <button id="downloadPdfBtn" class="btn secondary" type="button">Download PDF</button>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="./perkins.js"></script>
+    
+  </body>
+</html>

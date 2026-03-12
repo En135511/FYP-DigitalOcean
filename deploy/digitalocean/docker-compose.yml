@@ -1,0 +1,45 @@
+services:
+  vision:
+    build:
+      context: ../..
+      dockerfile: deploy/digitalocean/vision.Dockerfile
+    container_name: brailleai-vision
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=3)\""]
+      interval: 30s
+      timeout: 5s
+      retries: 8
+      start_period: 15s
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: deploy/digitalocean/backend.Dockerfile
+    container_name: brailleai-backend
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8080
+      VISION_SERVICE_BASE_URL: http://vision:8000
+      JAVA_TOOL_OPTIONS: -DLOUIS_CLI_PATH=/usr/bin/lou_translate -DLOUIS_TABLE=/app/liblouis/tables/en-us-g2.ctb -Dapp.cors.allowed-origins=${APP_CORS_ALLOWED_ORIGINS}
+    depends_on:
+      vision:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/api/braille/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+
+  ui:
+    build:
+      context: ../..
+      dockerfile: deploy/digitalocean/ui.Dockerfile
+    container_name: brailleai-ui
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${APP_HTTP_PORT}:80"
