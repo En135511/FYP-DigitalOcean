@@ -4,8 +4,14 @@ WORKDIR /src
 COPY . .
 
 RUN chmod +x ./mvnw \
-    && ./mvnw -DskipTests -pl brailleai-application -am clean package \
-    && JAR_PATH="$(find /src/brailleai-application/target -maxdepth 1 -name '*.jar' | head -n 1)" \
+    && ./mvnw -f brailleai-output/pom.xml -DskipTests install \
+    && ./mvnw -f brailleai-api/pom.xml -DskipTests install \
+    && ./mvnw -f brailleai-core/pom.xml -DskipTests install \
+    && ./mvnw -f brailleai-liblouis/pom.xml -DskipTests install \
+    && ./mvnw -f brailleai-vision/pom.xml -DskipTests install \
+    && ./mvnw -f brailleai-web/pom.xml -DskipTests install \
+    && ./mvnw -f brailleai-application/pom.xml -DskipTests clean package \
+    && JAR_PATH="$(find /src/brailleai-application/target -maxdepth 1 -name '*.jar' ! -name 'original-*.jar' | head -n 1)" \
     && test -n "$JAR_PATH" \
     && cp "$JAR_PATH" /tmp/app.jar
 
