@@ -68,57 +68,42 @@ public class LiblouisCliTranslator implements BrailleTranslator {
                 );
             }
 
-            List<String> command = new ArrayList<>();
-            command.add(cli.getAbsolutePath());
-            if (backward) {
-                command.add("--backward");
-            }
-            command.add("--display-table");
-            command.add(displayTable.getAbsolutePath());
-            command.add(table.getAbsolutePath());
-
-            ProcessBuilder pb = new ProcessBuilder(command);
-
-            // Ensure Liblouis can resolve table includes from the table directory.
-            Map<String, String> env = pb.environment();
             String tableDir = table.getParentFile() == null ? "" : table.getParentFile().getAbsolutePath();
-            String existing = env.get("LOUIS_TABLEPATH");
-            if (!tableDir.isBlank()) {
-                if (existing == null || existing.isBlank()) {
-                    env.put("LOUIS_TABLEPATH", tableDir);
-                } else if (!existing.contains(tableDir)) {
-                    env.put("LOUIS_TABLEPATH", tableDir + File.pathSeparator + existing);
+            List<List<String>> commands = buildCandidateCommands(
+                    cli.getAbsolutePath(),
+                    table.getAbsolutePath(),
+                    displayTable.getAbsolutePath(),
+                    backward
+            );
+
+            CliRunResult successfulRun = null;
+            List<String> failureDetails = new ArrayList<>();
+
+            for (List<String> command : commands) {
+                try {
+                    CliRunResult result = executeCommand(command, input, tableDir);
+                    if (result.exitCode == 0) {
+                        successfulRun = result;
+                        break;
+                    }
+                    failureDetails.add(formatFailure(result.commandDisplay, result.exitCode, result.stderr));
+                } catch (IOException | InterruptedException commandException) {
+                    if (commandException instanceof InterruptedException) {
+                        Thread.currentThread().interrupt();
+                    }
+                    String commandDisplay = String.join(" ", command);
+                    failureDetails.add(formatFailure(commandDisplay, -1, commandException.getMessage()));
                 }
             }
 
-            Process process = pb.start();
-
-            StreamCollector stdout = new StreamCollector(process.getInputStream());
-            StreamCollector stderr = new StreamCollector(process.getErrorStream());
-
-            Thread outThread = new Thread(stdout, "liblouis-stdout");
-            Thread errThread = new Thread(stderr, "liblouis-stderr");
-            outThread.start();
-            errThread.start();
-
-            try (BufferedWriter writer = new BufferedWriter(
-                    new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8))) {
-                writer.write(input);
-            }
-
-            int exitCode = process.waitFor();
-            outThread.join();
-            errThread.join();
-
-            String output = stdout.getText();
-            String errorText = stderr.getText();
-
-            if (exitCode != 0) {
+            if (successfulRun == null) {
                 throw new LiblouisTranslationException(
-                        "Liblouis CLI failed with exit code " + exitCode + ": " + errorText
+                        "Liblouis CLI failed. Attempts: " + String.join(" || ", failureDetails)
                 );
             }
 
+            String output = successfulRun.stdout;
+            String errorText = successfulRun.stderr;
             if (errorText != null && !errorText.isBlank()) {
                 System.err.println("Liblouis CLI stderr: " + errorText);
             }
@@ -143,6 +128,98 @@ public class LiblouisCliTranslator implements BrailleTranslator {
             return new File("unicode.dis");
         }
         return new File(table.getParentFile(), "unicode.dis");
+    }
+
+    private List<List<String>> buildCandidateCommands(
+            String cliPath,
+            String tablePath,
+            String displayTablePath,
+            boolean backward
+    ) {
+        List<List<String>> commands = new ArrayList<>();
+
+        // Preferred modern long-option command.
+        List<String> primary = new ArrayList<>();
+        primary.add(cliPath);
+        if (backward) {
+            primary.add("--backward");
+        }
+        primary.add("--display-table");
+        primary.add(displayTablePath);
+        primary.add(tablePath);
+        commands.add(primary);
+
+        // Compatibility with older CLI option style.
+        List<String> shortDisplay = new ArrayList<>();
+        shortDisplay.add(cliPath);
+        if (backward) {
+            shortDisplay.add("-b");
+        }
+        shortDisplay.add("-d");
+        shortDisplay.add(displayTablePath);
+        shortDisplay.add(tablePath);
+        commands.add(shortDisplay);
+
+        // Final fallback: no explicit display table.
+        List<String> fallback = new ArrayList<>();
+        fallback.add(cliPath);
+        if (backward) {
+            fallback.add("-b");
+        }
+        fallback.add(tablePath);
+        commands.add(fallback);
+
+        return commands;
+    }
+
+    private CliRunResult executeCommand(List<String> command, String input, String tableDir)
+            throws IOException, InterruptedException {
+        ProcessBuilder pb = new ProcessBuilder(command);
+
+        // Ensure Liblouis can resolve table includes from the table directory.
+        Map<String, String> env = pb.environment();
+        String existing = env.get("LOUIS_TABLEPATH");
+        if (!tableDir.isBlank()) {
+            if (existing == null || existing.isBlank()) {
+                env.put("LOUIS_TABLEPATH", tableDir);
+            } else if (!existing.contains(tableDir)) {
+                env.put("LOUIS_TABLEPATH", tableDir + File.pathSeparator + existing);
+            }
+        }
+
+        Process process = pb.start();
+
+        StreamCollector stdout = new StreamCollector(process.getInputStream());
+        StreamCollector stderr = new StreamCollector(process.getErrorStream());
+
+        Thread outThread = new Thread(stdout, "liblouis-stdout");
+        Thread errThread = new Thread(stderr, "liblouis-stderr");
+        outThread.start();
+        errThread.start();
+
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8))) {
+            writer.write(input);
+        }
+
+        int exitCode = process.waitFor();
+        outThread.join();
+        errThread.join();
+
+        return new CliRunResult(
+                exitCode,
+                stdout.getText(),
+                stderr.getText(),
+                String.join(" ", command)
+        );
+    }
+
+    private String formatFailure(String commandDisplay, int exitCode, String stderr) {
+        String detail = stderr == null ? "" : stderr.trim().replaceAll("\\s+", " ");
+        if (detail.length() > 240) {
+            detail = detail.substring(0, 240) + "...";
+        }
+        return "cmd=[" + commandDisplay + "] exit=" + exitCode + " stderr=" + detail;
     }
 
     /**
@@ -240,6 +317,20 @@ public class LiblouisCliTranslator implements BrailleTranslator {
 
         String getText() {
             return new String(buffer.toByteArray(), StandardCharsets.UTF_8);
+        }
+    }
+
+    private static class CliRunResult {
+        private final int exitCode;
+        private final String stdout;
+        private final String stderr;
+        private final String commandDisplay;
+
+        CliRunResult(int exitCode, String stdout, String stderr, String commandDisplay) {
+            this.exitCode = exitCode;
+            this.stdout = stdout;
+            this.stderr = stderr;
+            this.commandDisplay = commandDisplay;
         }
     }
 

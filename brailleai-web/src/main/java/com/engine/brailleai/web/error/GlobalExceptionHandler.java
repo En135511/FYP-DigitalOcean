@@ -37,9 +37,16 @@ public class GlobalExceptionHandler {
     public ResponseEntity<BrailleResponse> handleLiblouisFailure(
             LiblouisTranslationException ex
     ) {
+        log.error("Liblouis translation failure", ex);
+        String message = ex.getMessage();
+        if (message == null || message.isBlank()) {
+            message = "Translation engine failed";
+        } else {
+            message = "Translation engine failed: " + message;
+        }
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(BrailleResponse.error("Translation engine failed"));
+                .body(BrailleResponse.error(message));
     }
 
     @ExceptionHandler(BrailleException.class)
