@@ -112,6 +112,9 @@ public class LiblouisCliTranslator implements BrailleTranslator {
             if (backward && output.startsWith(" ")) {
                 output = output.substring(1);
             }
+            if (!backward) {
+                output = normalizeBrailleOutput(output);
+            }
 
             return output;
 
@@ -217,6 +220,108 @@ public class LiblouisCliTranslator implements BrailleTranslator {
             detail = detail.substring(0, 240) + "...";
         }
         return "cmd=[" + commandDisplay + "] exit=" + exitCode + " stderr=" + detail;
+    }
+
+    private String normalizeBrailleOutput(String output) {
+        if (output == null || output.isBlank()) {
+            return output;
+        }
+        if (containsUnicodeBraille(output)) {
+            return output;
+        }
+        return convertBrailleAsciiToUnicode(output);
+    }
+
+    private boolean containsUnicodeBraille(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            char ch = value.charAt(i);
+            if (ch >= '\u2800' && ch <= '\u28FF') {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String convertBrailleAsciiToUnicode(String value) {
+        StringBuilder out = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            out.append(mapBrailleAsciiChar(value.charAt(i)));
+        }
+        return out.toString();
+    }
+
+    private char mapBrailleAsciiChar(char ch) {
+        if (ch == ' ' || ch == '\n' || ch == '\r' || ch == '\t') {
+            return ch;
+        }
+
+        char key = Character.isLetter(ch) ? Character.toUpperCase(ch) : ch;
+        return switch (key) {
+            case '!' -> '\u282e';
+            case '"' -> '\u2810';
+            case '#' -> '\u283c';
+            case '$' -> '\u282b';
+            case '%' -> '\u2829';
+            case '&' -> '\u282f';
+            case '\'' -> '\u2804';
+            case '(' -> '\u2837';
+            case ')' -> '\u283e';
+            case '*' -> '\u2821';
+            case '+' -> '\u282c';
+            case ',' -> '\u2820';
+            case '-' -> '\u2824';
+            case '.' -> '\u2828';
+            case '/' -> '\u280c';
+            case '0' -> '\u2834';
+            case '1' -> '\u2802';
+            case '2' -> '\u2806';
+            case '3' -> '\u2812';
+            case '4' -> '\u2832';
+            case '5' -> '\u2822';
+            case '6' -> '\u2816';
+            case '7' -> '\u2836';
+            case '8' -> '\u2826';
+            case '9' -> '\u2814';
+            case ':' -> '\u2831';
+            case ';' -> '\u2830';
+            case '<' -> '\u2823';
+            case '=' -> '\u283f';
+            case '>' -> '\u281c';
+            case '?' -> '\u2839';
+            case '@' -> '\u2808';
+            case 'A' -> '\u2801';
+            case 'B' -> '\u2803';
+            case 'C' -> '\u2809';
+            case 'D' -> '\u2819';
+            case 'E' -> '\u2811';
+            case 'F' -> '\u280b';
+            case 'G' -> '\u281b';
+            case 'H' -> '\u2813';
+            case 'I' -> '\u280a';
+            case 'J' -> '\u281a';
+            case 'K' -> '\u2805';
+            case 'L' -> '\u2807';
+            case 'M' -> '\u280d';
+            case 'N' -> '\u281d';
+            case 'O' -> '\u2815';
+            case 'P' -> '\u280f';
+            case 'Q' -> '\u281f';
+            case 'R' -> '\u2817';
+            case 'S' -> '\u280e';
+            case 'T' -> '\u281e';
+            case 'U' -> '\u2825';
+            case 'V' -> '\u2827';
+            case 'W' -> '\u283a';
+            case 'X' -> '\u282d';
+            case 'Y' -> '\u283d';
+            case 'Z' -> '\u2835';
+            case '[' -> '\u282a';
+            case '\\' -> '\u2833';
+            case ']' -> '\u283b';
+            case '^' -> '\u2818';
+            case '_' -> '\u2838';
+            default -> ch;
+        };
     }
 
     /**
