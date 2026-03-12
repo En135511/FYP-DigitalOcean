@@ -34,7 +34,7 @@ services:
       - key: APP_CORS_ALLOWED_ORIGINS
         value: "*"
       - key: JAVA_TOOL_OPTIONS
-        value: "-Xms256m -Xmx512m -DLOUIS_CLI_PATH=/usr/bin/lou_translate -DLOUIS_TABLE=/usr/share/liblouis/tables/en-us-g2.ctb -Dapp.cors.allowed-origins=*"
+        value: "-Xms128m -Xmx320m -DLOUIS_CLI_PATH=/usr/bin/lou_translate -DLOUIS_TABLE=/usr/share/liblouis/tables/en-us-g2.ctb -Dapp.cors.allowed-origins=*"
 
   - type: web
     name: brailleai-ui
