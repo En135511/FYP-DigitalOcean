@@ -2,10 +2,13 @@
 set -eu
 
 PORT_VALUE="${PORT:-10000}"
-VISION_URL="${VISION_SERVICE_BASE_URL:-}"
+VISION_URL=""
 
-if [ -z "$VISION_URL" ] && [ -n "${VISION_SERVICE_HOSTPORT:-}" ]; then
+# Prefer Render private service routing for backend->vision traffic.
+if [ -n "${VISION_SERVICE_HOSTPORT:-}" ]; then
   VISION_URL="http://${VISION_SERVICE_HOSTPORT}"
+elif [ -n "${VISION_SERVICE_BASE_URL:-}" ]; then
+  VISION_URL="${VISION_SERVICE_BASE_URL}"
 fi
 
 if [ -z "$VISION_URL" ]; then
