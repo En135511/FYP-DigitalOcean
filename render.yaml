@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: brailleai-vision
+    runtime: docker
+    plan: free
+    dockerfilePath: ./deploy/render/vision.Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+
+  - type: web
+    name: brailleai-backend
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./deploy/render/backend.Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/braille/health
+    envVars:
+      - key: VISION_SERVICE_BASE_URL
+        fromService:
+          type: web
+          name: brailleai-vision
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: "*"
+      - key: JAVA_TOOL_OPTIONS
+        value: "-Xms256m -Xmx512m -DLOUIS_CLI_PATH=/usr/bin/lou_translate -DLOUIS_TABLE=/app/liblouis/tables/en-us-g2.ctb -Dapp.cors.allowed-origins=*"
+
+  - type: web
+    name: brailleai-ui
+    runtime: docker
+    plan: free
+    dockerfilePath: ./deploy/render/ui.Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    envVars:
+      - key: BACKEND_HOSTPORT
+        fromService:
+          type: web
+          name: brailleai-backend
+          property: hostport

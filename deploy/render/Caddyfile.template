@@ -1,0 +1,15 @@
+:10000 {
+    encode zstd gzip
+
+    root * /srv
+
+    @api path /api/*
+    handle @api {
+        reverse_proxy __BACKEND_HOSTPORT__
+    }
+
+    handle {
+        try_files {path} {path}/ /index.html
+        file_server
+    }
+}

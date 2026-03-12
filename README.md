@@ -11,6 +11,8 @@ Deployment files are in:
 - `deploy/digitalocean/*.Dockerfile`
 - `deploy/digitalocean/Caddyfile`
 - `deploy/digitalocean/scripts/*.sh`
+- `deploy/render/README.md`
+- `render.yaml`
 
 GitHub push flow:
 
