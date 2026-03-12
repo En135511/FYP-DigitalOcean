@@ -26,6 +26,7 @@ import com.engine.brailleai.vision.quality.VisionGeometryPreflightAssessment;
 import com.engine.brailleai.vision.quality.VisionGeometryPreflightAssessor;
 import com.engine.brailleai.vision.quality.VisionQualityAssessment;
 import com.engine.brailleai.vision.quality.VisionQualityAssessor;
+import com.engine.brailleai.web.error.VisionServiceUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -202,6 +203,12 @@ public class VisionBrailleController {
                 attempts.add(fallbackAttempt);
                 logAttempt(fallbackAttempt);
             }
+        }
+
+        if (!hasAnyVisionDetectionResponse(attempts)) {
+            throw new VisionServiceUnavailableException(
+                    "Vision service is unreachable from backend. Verify brailleai-backend can reach brailleai-vision."
+            );
         }
 
         TranslationAttempt consensusAttempt = buildConsensusAttempt(attempts, table);
@@ -415,6 +422,13 @@ public class VisionBrailleController {
             return null;
         }
         return attempt;
+    }
+
+    private boolean hasAnyVisionDetectionResponse(List<TranslationAttempt> attempts) {
+        return attempts != null && attempts.stream()
+                .filter(Objects::nonNull)
+                .map(TranslationAttempt::getDetectionResponse)
+                .anyMatch(Objects::nonNull);
     }
 
     private boolean isDotNeuralNetResponse(DotDetectionResponseDto response) {

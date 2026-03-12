@@ -58,6 +58,20 @@ public class GlobalExceptionHandler {
                 .body(BrailleResponse.error(ex.getMessage()));
     }
 
+    @ExceptionHandler(VisionServiceUnavailableException.class)
+    public ResponseEntity<BrailleResponse> handleVisionServiceUnavailable(
+            VisionServiceUnavailableException ex
+    ) {
+        log.error("Vision service unavailable", ex);
+        String message = ex.getMessage();
+        if (message == null || message.isBlank()) {
+            message = "Vision service is unavailable";
+        }
+        return ResponseEntity
+                .status(HttpStatus.BAD_GATEWAY)
+                .body(BrailleResponse.error(message));
+    }
+
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<BrailleResponse> handleUploadTooLarge(
             MaxUploadSizeExceededException ex

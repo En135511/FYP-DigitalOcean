@@ -14,8 +14,10 @@ import org.springframework.web.multipart.MultipartFile;
 public class VisionClient {
 
     private final WebClient webClient;
+    private final String visionServiceBaseUrl;
 
     public VisionClient(String visionServiceBaseUrl) {
+        this.visionServiceBaseUrl = visionServiceBaseUrl;
         this.webClient = WebClient.builder()
                 .baseUrl(visionServiceBaseUrl)
                 .build();
@@ -32,7 +34,7 @@ public class VisionClient {
                     image == null ? null : image.getBytes()
             );
         } catch (Exception e) {
-            throw new RuntimeException("Failed to call vision service", e);
+            throw new RuntimeException("Failed to call vision service at " + visionServiceBaseUrl, e);
         }
     }
 
@@ -73,7 +75,7 @@ public class VisionClient {
                     .block();
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to call vision service", e);
+            throw new RuntimeException("Failed to call vision service at " + visionServiceBaseUrl, e);
         }
     }
 }
