@@ -115,9 +115,6 @@ public class LiblouisCliTranslator implements BrailleTranslator {
 
             return output;
 
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new LiblouisTranslationException("Liblouis CLI translation interrupted", e);
         } catch (Exception e) {
             throw new LiblouisTranslationException("Liblouis CLI translation failed", e);
         }
