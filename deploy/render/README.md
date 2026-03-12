@@ -34,6 +34,7 @@ Notes:
 - Functional API check remains available at `/api/braille/health`.
 - On free vision instances, first image request can cold-start and take longer.
 - UI proxy timeouts are extended for `/api/vision/*` to avoid false 504s.
+- Vision service pins model path and uses a lower confidence threshold to reduce missed-dot cases on cloud CPU.
 
 ## Optional Next Step
 
