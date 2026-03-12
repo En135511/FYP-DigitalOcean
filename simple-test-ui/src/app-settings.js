@@ -300,10 +300,22 @@ export const applyDisplaySettings = (settingsInput) => {
 export const getApiBaseUrl = (settingsInput = null) => {
   const settings = settingsInput ? normalizeSettings(settingsInput) : ensureCachedSettings();
   const normalized = normalizeApiBaseUrl(settings.apiBaseUrl || DEFAULT_SETTINGS.apiBaseUrl);
-  if (normalized === SAME_ORIGIN_API) {
-    if (typeof window !== "undefined" && window.location && window.location.origin) {
-      return window.location.origin.replace(/\/$/, "");
+  if (typeof window !== "undefined" && window.location && window.location.origin) {
+    const currentOrigin = window.location.origin.replace(/\/$/, "");
+    const hostname = (window.location.hostname || "").toLowerCase();
+    const isLocalHost = hostname === "localhost" || hostname === "127.0.0.1";
+
+    // In hosted deployments, force same-origin proxy routing so stale localStorage
+    // API URLs (for example old ngrok endpoints) cannot hijack requests.
+    if (!isLocalHost) {
+      return currentOrigin;
     }
+
+    if (normalized === SAME_ORIGIN_API) {
+      return currentOrigin;
+    }
+  }
+  if (normalized === SAME_ORIGIN_API) {
     return "";
   }
   return normalized.replace(/\/$/, "");
