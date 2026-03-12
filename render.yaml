@@ -29,6 +29,11 @@ services:
           type: web
           name: brailleai-vision
           property: hostport
+      - key: VISION_SERVICE_BASE_URL
+        fromService:
+          type: web
+          name: brailleai-vision
+          property: url
       - key: APP_CORS_ALLOWED_ORIGINS
         value: "*"
       - key: JAVA_TOOL_OPTIONS
