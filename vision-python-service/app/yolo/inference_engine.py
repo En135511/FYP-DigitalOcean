@@ -26,6 +26,8 @@ class YoloInferenceEngine:
         self.model = model
         self.abstain_uncertain = self._read_bool_env("YOLO_ABSTAIN_UNCERTAIN", False)
         self.beam_width = int(max(2, min(10, self._read_float_env("YOLO_BEAM_WIDTH", 6.0))))
+        self.max_variants = int(max(1, min(8, self._read_float_env("YOLO_MAX_VARIANTS", 4.0))))
+        self._configure_runtime_threads()
 
     @staticmethod
     def _read_bool_env(name: str, default: bool) -> bool:
@@ -43,6 +45,23 @@ class YoloInferenceEngine:
             return float(value)
         except ValueError:
             return default
+
+    def _configure_runtime_threads(self) -> None:
+        # Keep inference resource usage predictable on small cloud instances.
+        torch_threads = int(max(1, min(4, self._read_float_env("YOLO_TORCH_THREADS", 1.0))))
+        cv_threads = int(max(1, min(4, self._read_float_env("YOLO_CV_THREADS", 1.0))))
+        try:
+            import torch  # type: ignore
+            torch.set_num_threads(torch_threads)
+            if hasattr(torch, "set_num_interop_threads"):
+                torch.set_num_interop_threads(torch_threads)
+        except Exception:
+            pass
+
+        try:
+            cv2.setNumThreads(cv_threads)
+        except Exception:
+            pass
 
     def detect_dots(
         self,
@@ -97,6 +116,8 @@ class YoloInferenceEngine:
         iou: float
     ) -> Tuple[List[Dict[str, Any]], int, int, Optional[str], str, int, bool, Optional[str]]:
         variants = build_detection_variants(arr)
+        if len(variants) > self.max_variants:
+            variants = variants[:self.max_variants]
 
         all_cells = self._collect_cells_from_variants(variants, width, height, conf, iou)
 

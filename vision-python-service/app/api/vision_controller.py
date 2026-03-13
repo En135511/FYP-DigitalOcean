@@ -41,6 +41,9 @@ def model_info() -> dict:
         "conf_threshold": _read_float_env("YOLO_CONF_THRESHOLD", 0.18),
         "conf_retry_threshold": _read_float_env("YOLO_CONF_RETRY_THRESHOLD", 0.08),
         "iou_threshold": _read_float_env("YOLO_IOU_THRESHOLD", 0.30),
+        "max_variants": int(max(1, min(8, _read_float_env("YOLO_MAX_VARIANTS", 4.0)))),
+        "torch_threads": int(max(1, min(4, _read_float_env("YOLO_TORCH_THREADS", 1.0)))),
+        "cv_threads": int(max(1, min(4, _read_float_env("YOLO_CV_THREADS", 1.0)))),
     }
 
 
