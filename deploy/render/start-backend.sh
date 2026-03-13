@@ -2,24 +2,40 @@
 set -eu
 
 PORT_VALUE="${PORT:-10000}"
-VISION_URL=""
+VISION_PORT_VALUE="${VISION_PORT:-8000}"
+VISION_URL="http://127.0.0.1:${VISION_PORT_VALUE}"
+VISION_STDOUT_LOG="${VISION_STDOUT_LOG:-/tmp/vision.stdout.log}"
+VISION_STDERR_LOG="${VISION_STDERR_LOG:-/tmp/vision.stderr.log}"
 
-# Prefer explicit base URL when provided (stable across private-network issues).
-if [ -n "${VISION_SERVICE_BASE_URL:-}" ]; then
-  VISION_URL="${VISION_SERVICE_BASE_URL}"
-elif [ -n "${VISION_SERVICE_HOSTPORT:-}" ]; then
-  VISION_URL="http://${VISION_SERVICE_HOSTPORT}"
-fi
+echo "Starting co-located vision service on port ${VISION_PORT_VALUE}..."
+cd /app/vision-python-service
+python -m uvicorn app.main:app --host 0.0.0.0 --port "${VISION_PORT_VALUE}" >"${VISION_STDOUT_LOG}" 2>"${VISION_STDERR_LOG}" &
+VISION_PID=$!
 
-if [ -z "$VISION_URL" ]; then
-  VISION_URL="http://localhost:8000"
-fi
+cleanup() {
+  kill "${VISION_PID}" >/dev/null 2>&1 || true
+}
+trap cleanup EXIT INT TERM
 
+echo "Waiting for vision service readiness..."
+attempt=0
+until curl -fsS "${VISION_URL}/" >/dev/null 2>&1; do
+  attempt=$((attempt + 1))
+  if [ "${attempt}" -ge 60 ]; then
+    echo "Vision service failed to become ready at ${VISION_URL}."
+    if [ -f "${VISION_STDERR_LOG}" ]; then
+      echo "--- vision stderr ---"
+      tail -n 120 "${VISION_STDERR_LOG}" || true
+      echo "---------------------"
+    fi
+    exit 1
+  fi
+  sleep 1
+done
+
+echo "Vision service is ready at ${VISION_URL}"
 echo "Starting backend on port ${PORT_VALUE}"
 echo "Using vision service URL: ${VISION_URL}"
-if [ "$VISION_URL" = "http://localhost:8000" ]; then
-  echo "WARNING: Falling back to localhost vision URL. Set VISION_SERVICE_HOSTPORT or VISION_SERVICE_BASE_URL in Render."
-fi
 
 exec java $JAVA_TOOL_OPTIONS \
   -Dserver.port="${PORT_VALUE}" \

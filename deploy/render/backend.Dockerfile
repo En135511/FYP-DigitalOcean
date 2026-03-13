@@ -15,20 +15,41 @@ RUN chmod +x ./mvnw \
     && test -n "$JAR_PATH" \
     && cp "$JAR_PATH" /tmp/app.jar
 
-FROM eclipse-temurin:17-jre-jammy
+FROM python:3.13-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends liblouis-bin curl \
+    && apt-get install -y --no-install-recommends \
+        openjdk-17-jre-headless \
+        liblouis-bin \
+        curl \
+        libglib2.0-0 \
+        libgomp1 \
+        libxcb1 \
+        libx11-6 \
+        libxext6 \
+        libxrender1 \
+        libgl1 \
+        libsm6 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
+COPY vision-python-service/requirements.txt /app/vision-python-service/requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r /app/vision-python-service/requirements.txt
+
 COPY --from=build /tmp/app.jar /app/app.jar
+COPY vision-python-service /app/vision-python-service
 COPY liblouis/tables /app/liblouis/tables
 COPY deploy/render/start-backend.sh /app/start-backend.sh
 RUN chmod +x /app/start-backend.sh
 
 ENV JAVA_TOOL_OPTIONS="-DLOUIS_CLI_PATH=/usr/bin/lou_translate -DLOUIS_TABLE=/usr/share/liblouis/tables/en-us-g2.ctb"
+ENV YOLO_MODEL_PATH="/app/vision-python-service/model/yolov8_braille.pt"
+ENV VISION_PORT=8000
 
 EXPOSE 10000
 

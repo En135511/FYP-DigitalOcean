@@ -4,16 +4,13 @@ This repo includes a Render Blueprint at `render.yaml`.
 
 ## Stack
 
-- `brailleai-ui` (Caddy + static frontend, free plan)
 - `brailleai-ui` (Nginx + static frontend, free plan)
-- `brailleai-backend` (Spring Boot + Liblouis, starter plan)
-- `brailleai-vision` (Python vision service, free plan)
+- `brailleai-backend` (Spring Boot + Liblouis + co-located Python vision, starter plan)
 
-## Why this split
+## Why this layout
 
-- Keeps monthly cost lower than running all services on paid plans.
-- Keeps backend awake on Render starter plan.
-- Vision can run on free plan (first request may be slower after idle spin-down).
+- Removes backend->vision network failures by running vision in the same container.
+- Keeps costs predictable with only one paid compute service plus free UI.
 
 ## Deploy Steps (Render Dashboard)
 
@@ -24,18 +21,12 @@ This repo includes a Render Blueprint at `render.yaml`.
 5. Review plans:
    - `brailleai-backend`: `starter`
    - `brailleai-ui`: `free`
-   - `brailleai-vision`: `free`
 6. Click **Apply** / **Create New Resources**.
-7. Wait for all 3 services to reach `Live`.
+7. Wait for both services to reach `Live`.
 8. Open the `brailleai-ui` URL.
 
 Notes:
 - Render backend health probe uses `/healthz` (lightweight startup probe).
 - Functional API check remains available at `/api/braille/health`.
-- On free vision instances, first image request can cold-start and take longer.
 - UI proxy timeouts are extended for `/api/vision/*` to avoid false 504s.
-- Vision service pins model path and uses a lower confidence threshold to reduce missed-dot cases on cloud CPU.
-
-## Optional Next Step
-
-- Upgrade `brailleai-vision` from free to starter if image translation cold starts are too slow.
+- Backend container starts local vision first on `127.0.0.1:8000`, then Spring Boot on Render `PORT`.
