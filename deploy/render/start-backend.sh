@@ -4,12 +4,10 @@ set -eu
 PORT_VALUE="${PORT:-10000}"
 VISION_PORT_VALUE="${VISION_PORT:-8000}"
 VISION_URL="http://127.0.0.1:${VISION_PORT_VALUE}"
-VISION_STDOUT_LOG="${VISION_STDOUT_LOG:-/tmp/vision.stdout.log}"
-VISION_STDERR_LOG="${VISION_STDERR_LOG:-/tmp/vision.stderr.log}"
 
 echo "Starting co-located vision service on port ${VISION_PORT_VALUE}..."
 cd /app/vision-python-service
-python -m uvicorn app.main:app --host 0.0.0.0 --port "${VISION_PORT_VALUE}" >"${VISION_STDOUT_LOG}" 2>"${VISION_STDERR_LOG}" &
+python -m uvicorn app.main:app --host 0.0.0.0 --port "${VISION_PORT_VALUE}" &
 VISION_PID=$!
 
 cleanup() {
@@ -23,11 +21,6 @@ until curl -fsS "${VISION_URL}/" >/dev/null 2>&1; do
   attempt=$((attempt + 1))
   if [ "${attempt}" -ge 60 ]; then
     echo "Vision service failed to become ready at ${VISION_URL}."
-    if [ -f "${VISION_STDERR_LOG}" ]; then
-      echo "--- vision stderr ---"
-      tail -n 120 "${VISION_STDERR_LOG}" || true
-      echo "---------------------"
-    fi
     exit 1
   fi
   sleep 1
