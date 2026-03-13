@@ -7,6 +7,7 @@ import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.multipart.MultipartFile;
+import java.time.Duration;
 
 /**
  * HTTP client for the external Python vision service.
@@ -72,7 +73,7 @@ public class VisionClient {
                     .body(BodyInserters.fromMultipartData(builder.build()))
                     .retrieve()
                     .bodyToMono(DotDetectionResponseDto.class)
-                    .block();
+                    .block(Duration.ofSeconds(25));
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to call vision service at " + visionServiceBaseUrl, e);
