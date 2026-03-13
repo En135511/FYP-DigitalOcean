@@ -2,7 +2,7 @@ services:
   - type: web
     name: brailleai-vision
     runtime: docker
-    plan: free
+    plan: starter
     dockerfilePath: ./deploy/render/vision.Dockerfile
     dockerContext: .
     healthCheckPath: /
