@@ -15,7 +15,7 @@ RUN chmod +x ./mvnw \
     && test -n "$JAR_PATH" \
     && cp "$JAR_PATH" /tmp/app.jar
 
-FROM python:3.13-slim
+FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -38,8 +38,7 @@ RUN apt-get update \
 WORKDIR /app
 
 COPY vision-python-service/requirements.txt /app/vision-python-service/requirements.txt
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r /app/vision-python-service/requirements.txt
+RUN python -m pip install --no-cache-dir -r /app/vision-python-service/requirements.txt
 
 COPY --from=build /tmp/app.jar /app/app.jar
 COPY vision-python-service /app/vision-python-service
