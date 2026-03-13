@@ -22,7 +22,7 @@ ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        openjdk-17-jre-headless \
+        default-jre-headless \
         liblouis-bin \
         curl \
         libglib2.0-0 \
