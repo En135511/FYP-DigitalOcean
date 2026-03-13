@@ -49,3 +49,17 @@ services:
           type: web
           name: brailleai-backend
           property: hostport
+
+  - type: web
+    name: brailleai
+    runtime: docker
+    plan: free
+    dockerfilePath: ./deploy/render/ui.Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    envVars:
+      - key: BACKEND_HOSTPORT
+        fromService:
+          type: web
+          name: brailleai-backend
+          property: hostport
